@@ -561,6 +561,19 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);font-size:13px
 .map-stop-popup strong{font-size:13px;display:block;margin-bottom:4px}
 .map-stop-popup .b{cursor:pointer}
 
+/* ─── PREVIEW AKKOORD BALK ─── */
+#preview-bar{position:fixed;top:0;left:0;right:0;z-index:9000;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;padding:10px 20px;display:flex;align-items:center;gap:12px;font-family:var(--sans);font-size:13px;box-shadow:0 2px 12px rgba(0,0,0,.2);transform:translateY(-100%);transition:transform .3s ease}
+#preview-bar.on{transform:translateY(0)}
+#preview-bar .pb-tag{background:rgba(255,255,255,.2);border-radius:4px;padding:2px 8px;font-size:10px;font-family:var(--mono);letter-spacing:.06em}
+#preview-bar .pb-title{font-weight:700;flex:1}
+#preview-bar .pb-desc{font-size:11px;opacity:.85;flex:2}
+#preview-bar .pb-approve{background:#fff;color:#0d47a1;border:none;border-radius:6px;padding:7px 18px;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s}
+#preview-bar .pb-approve:hover{background:#e8f0fe;transform:scale(1.03)}
+#preview-bar .pb-approve.done{background:#0f7a4e;color:#fff}
+#preview-bar .pb-reject{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer}
+#preview-bar .pb-reject:hover{background:rgba(255,255,255,.1)}
+.main-with-bar{padding-top:48px}
+
 /* ─── BREUK TELLER ─── */
 @keyframes glas-crack{0%{transform:rotate(0) scale(1);filter:none}25%{transform:rotate(-8deg) scale(1.15);filter:drop-shadow(0 0 4px rgba(192,57,43,.4))}50%{transform:rotate(5deg) scale(.95);filter:drop-shadow(0 0 2px rgba(192,57,43,.2))}75%{transform:rotate(-3deg) scale(1.05)}100%{transform:rotate(0) scale(1);filter:none}}
 @keyframes glas-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-3px)}40%{transform:translateX(3px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
@@ -3710,6 +3723,70 @@ function renderStopsList(ch) {
 }
 
 function closeMapPopup() {}
+
+
+// ── Preview akkoord systeem ─────────────────────────
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const isPreview = params.get('preview') === '1' || window.location.hostname.includes('--xlglasflow');
+  if (!isPreview) return;
+
+  const iteratie = params.get('iteratie') || 'Nieuwe iteratie';
+  const desc     = params.get('desc')     || 'Bekijk de wijzigingen en geef akkoord om te publiceren naar productie.';
+  const pr       = params.get('pr')       || '';
+
+  document.getElementById('pb-title').textContent = iteratie;
+  document.getElementById('pb-desc').textContent  = desc;
+  document.getElementById('preview-bar').classList.add('on');
+  document.querySelector('.main').classList.add('main-with-bar');
+
+  window.approvePreview = function() {
+    const btn = document.getElementById('pb-approve-btn');
+    btn.textContent = '⏳ Publiceren...';
+    btn.disabled = true;
+
+    fetch('https://api.github.com/repos/smarterthancode/glasflow/pulls/' + pr + '/merge', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ commit_title: '✓ Akkoord klant: ' + iteratie, merge_method: 'squash' })
+    })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(() => {
+      btn.textContent = '✓ Gepubliceerd!';
+      btn.classList.add('done');
+      setTimeout(() => {
+        document.getElementById('preview-bar').style.background = 'linear-gradient(135deg,#0f7a4e,#065f34)';
+        document.getElementById('pb-desc').textContent = 'Wijzigingen zijn live op xlglasflow.web.app';
+      }, 500);
+    })
+    .catch(() => {
+      // Geen GitHub token in browser — open GitHub PR
+      if (pr) {
+        window.open('https://github.com/smarterthancode/glasflow/pull/' + pr, '_blank');
+        btn.textContent = '→ Akkoord geven op GitHub';
+        btn.classList.remove('done');
+        btn.disabled = false;
+      }
+    });
+  };
+
+  window.rejectPreview = function() {
+    const reden = prompt('Reden voor afwijzing (optioneel):');
+    if (reden !== null) {
+      document.getElementById('preview-bar').style.background = '#c0392b';
+      document.getElementById('pb-title').textContent = '✕ Afgewezen';
+      document.getElementById('pb-desc').textContent = reden || 'Geen reden opgegeven';
+      document.getElementById('pb-approve-btn').style.display = 'none';
+      if (pr) {
+        fetch('https://api.github.com/repos/smarterthancode/glasflow/issues/' + pr + '/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ body: '❌ Afgewezen door klant: ' + (reden || 'geen reden') })
+        });
+      }
+    }
+  };
+})();
 
 document.addEventListener('DOMContentLoaded', () => { buildIntake(); buildAnalytics(); initDragDrop(); startSim(); scheduleProdFlash(); updateClock(); });
 </script>
