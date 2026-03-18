@@ -562,17 +562,32 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);font-size:13px
 .map-stop-popup .b{cursor:pointer}
 
 /* ─── PREVIEW AKKOORD BALK ─── */
-#preview-bar{position:fixed;top:0;left:0;right:0;z-index:9000;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;padding:10px 20px;display:flex;align-items:center;gap:12px;font-family:var(--sans);font-size:13px;box-shadow:0 2px 12px rgba(0,0,0,.2);transform:translateY(-100%);transition:transform .3s ease}
+#preview-bar{position:fixed;top:0;left:0;right:0;z-index:9000;background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;padding:9px 20px;display:flex;align-items:center;gap:12px;font-family:var(--sans);font-size:13px;box-shadow:0 2px 12px rgba(0,0,0,.25);transform:translateY(-100%);transition:transform .3s ease}
 #preview-bar.on{transform:translateY(0)}
-#preview-bar .pb-tag{background:rgba(255,255,255,.2);border-radius:4px;padding:2px 8px;font-size:10px;font-family:var(--mono);letter-spacing:.06em}
-#preview-bar .pb-title{font-weight:700;flex:1}
-#preview-bar .pb-desc{font-size:11px;opacity:.85;flex:2}
-#preview-bar .pb-approve{background:#fff;color:#0d47a1;border:none;border-radius:6px;padding:7px 18px;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s}
-#preview-bar .pb-approve:hover{background:#e8f0fe;transform:scale(1.03)}
-#preview-bar .pb-approve.done{background:#0f7a4e;color:#fff}
-#preview-bar .pb-reject{background:transparent;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer}
+#preview-bar .pb-tag{background:rgba(255,255,255,.2);border-radius:4px;padding:2px 8px;font-size:9.5px;font-family:var(--mono);letter-spacing:.06em;flex-shrink:0}
+#preview-bar .pb-version{background:rgba(255,255,255,.15);border-radius:4px;padding:2px 8px;font-size:9.5px;font-family:var(--mono);letter-spacing:.04em;flex-shrink:0}
+#preview-bar .pb-title{font-weight:700;font-size:13px;flex-shrink:0}
+#preview-bar .pb-meta{font-size:10px;opacity:.75;font-family:var(--mono);flex-shrink:0}
+#preview-bar .pb-spacer{flex:1}
+#preview-bar .pb-changelog{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer;transition:all .15s;flex-shrink:0}
+#preview-bar .pb-changelog:hover{background:rgba(255,255,255,.25)}
+#preview-bar .pb-reject{background:transparent;color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer;flex-shrink:0}
 #preview-bar .pb-reject:hover{background:rgba(255,255,255,.1)}
-.main-with-bar{padding-top:48px}
+#preview-bar .pb-approve{background:#fff;color:#0d47a1;border:none;border-radius:6px;padding:6px 16px;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0}
+#preview-bar .pb-approve:hover{background:#e8f0fe;transform:scale(1.02)}
+#preview-bar .pb-approve.done{background:#0f7a4e;color:#fff}
+.main-with-bar{padding-top:46px}
+/* Changelog lightbox */
+#ov-changelog{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9500;padding:20px;backdrop-filter:blur(3px)}
+#ov-changelog.on{display:flex}
+.cl-modal{background:var(--bg2);border-radius:10px;width:100%;max-width:540px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;animation:mi .17s ease}
+.cl-entry{padding:14px 18px;border-bottom:1px solid var(--line)}
+.cl-entry:last-child{border-bottom:none}
+.cl-entry-type{display:inline-block;font-size:8.5px;font-family:var(--mono);letter-spacing:.08em;padding:2px 6px;border-radius:3px;margin-right:6px;font-weight:700}
+.cl-new{background:#e8f5e9;color:#0f7a4e}
+.cl-fix{background:#fff3e0;color:#d4520a}
+.cl-change{background:#e3f2fd;color:#1a5fb4}
+.cl-remove{background:#fce4ec;color:#c0392b}
 
 /* ─── BREUK TELLER ─── */
 @keyframes glas-crack{0%{transform:rotate(0) scale(1);filter:none}25%{transform:rotate(-8deg) scale(1.15);filter:drop-shadow(0 0 4px rgba(192,57,43,.4))}50%{transform:rotate(5deg) scale(.95);filter:drop-shadow(0 0 2px rgba(192,57,43,.2))}75%{transform:rotate(-3deg) scale(1.05)}100%{transform:rotate(0) scale(1);filter:none}}
@@ -610,10 +625,31 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);font-size:13px
 <body>
 <div id="preview-bar">
   <span class="pb-tag">PREVIEW</span>
-  <span class="pb-title" id="pb-title">Nieuwe iteratie</span>
-  <span class="pb-desc" id="pb-desc">Bekijk de wijzigingen en geef akkoord om te publiceren.</span>
+  <span class="pb-version" id="pb-version">v0.0</span>
+  <span class="pb-title" id="pb-title">Iteratie laden...</span>
+  <span class="pb-meta" id="pb-meta"></span>
+  <span class="pb-spacer"></span>
+  <button class="pb-changelog" onclick="openChangelog()">📋 Changelog</button>
   <button class="pb-reject" onclick="rejectPreview()">✕ Afwijzen</button>
-  <button class="pb-approve" id="pb-approve-btn" onclick="approvePreview()">✓ Akkoord — publiceren</button>
+  <button class="pb-approve" id="pb-approve-btn" onclick="approvePreview()">✓ Akkoord &amp; publiceren</button>
+</div>
+
+<!-- Changelog lightbox -->
+<div id="ov-changelog" onclick="if(event.target===this)closeChangelog()">
+  <div class="cl-modal">
+    <div class="mh">
+      <div>
+        <div class="mt" id="cl-title">Changelog</div>
+        <div class="ms" id="cl-sub">Overzicht van alle wijzigingen</div>
+      </div>
+      <div class="mc" onclick="closeChangelog()">×</div>
+    </div>
+    <div style="overflow-y:auto;flex:1" id="cl-body"></div>
+    <div style="padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn" onclick="closeChangelog()">Sluiten</button>
+      <button class="btn pri" onclick="closeChangelog();approvePreview()">✓ Akkoord &amp; publiceren</button>
+    </div>
+  </div>
 </div>
 
 <!-- SIDEBAR -->
@@ -3742,10 +3778,46 @@ function closeMapPopup() {}
   const desc     = params.get('desc')     || 'Bekijk de wijzigingen en geef akkoord om te publiceren naar productie.';
   const pr       = params.get('pr')       || '';
 
-  document.getElementById('pb-title').textContent = iteratie;
-  document.getElementById('pb-desc').textContent  = desc;
+  const versie   = params.get('versie')   || 'v1.0';
+  const pubdatum = params.get('pubdatum') || '';
+  const pubtijd  = params.get('pubtijd')  || '';
+
+  document.getElementById('pb-version').textContent = versie;
+  document.getElementById('pb-title').textContent   = iteratie;
+
+  // Meta: publicatiedatum + tijd
+  let metaParts = [];
+  if (pubdatum) metaParts.push('Publicatie: ' + pubdatum);
+  if (pubtijd)  metaParts.push('om ' + pubtijd);
+  document.getElementById('pb-meta').textContent = metaParts.join(' ');
+
   document.getElementById('preview-bar').classList.add('on');
   document.querySelector('.main').classList.add('main-with-bar');
+
+  // Changelog vullen
+  const changelogParam = params.get('changelog');
+  let changelog = [];
+  try { if (changelogParam) changelog = JSON.parse(decodeURIComponent(changelogParam)); } catch(e) {}
+  if (!changelog.length) {
+    changelog = [
+      { type:'new',    tekst:'Preview & akkoord systeem toegevoegd' },
+      { type:'change', tekst:'Bezorging kaart verbeterd' },
+      { type:'fix',    tekst:'Productie stap animaties gefixed' },
+    ];
+  }
+
+  const typeLabel = { new:'Nieuw', fix:'Fix', change:'Wijziging', remove:'Verwijderd' };
+  const typeClass = { new:'cl-new', fix:'cl-fix', change:'cl-change', remove:'cl-remove' };
+
+  document.getElementById('cl-title').textContent = iteratie + ' · ' + versie;
+  document.getElementById('cl-sub').textContent   = (pubdatum ? 'Gepland: ' + pubdatum + (pubtijd ? ' om ' + pubtijd : '') : 'Publicatiedatum nog niet bepaald');
+  document.getElementById('cl-body').innerHTML = changelog.map(c =>
+    '<div class="cl-entry"><span class="cl-entry-type ' + (typeClass[c.type]||'cl-change') + '">' +
+    (typeLabel[c.type]||c.type).toUpperCase() + '</span>' + c.tekst + '</div>'
+  ).join('');
+
+  window.openChangelog = function() { document.getElementById('ov-changelog').classList.add('on'); };
+  window.closeChangelog = function() { document.getElementById('ov-changelog').classList.remove('on'); };
 
   window.approvePreview = function() {
     const btn = document.getElementById('pb-approve-btn');
