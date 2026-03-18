@@ -608,6 +608,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--tx);font-size:13px
 
 </head>
 <body>
+<div id="preview-bar">
+  <span class="pb-tag">PREVIEW</span>
+  <span class="pb-title" id="pb-title">Nieuwe iteratie</span>
+  <span class="pb-desc" id="pb-desc">Bekijk de wijzigingen en geef akkoord om te publiceren.</span>
+  <button class="pb-reject" onclick="rejectPreview()">✕ Afwijzen</button>
+  <button class="pb-approve" id="pb-approve-btn" onclick="approvePreview()">✓ Akkoord — publiceren</button>
+</div>
 
 <!-- SIDEBAR -->
 <div class="sb">
@@ -3728,7 +3735,7 @@ function closeMapPopup() {}
 // ── Preview akkoord systeem ─────────────────────────
 (function() {
   const params = new URLSearchParams(window.location.search);
-  const isPreview = params.get('preview') === '1' || window.location.hostname.includes('--xlglasflow');
+  const isPreview = params.get('preview') === '1' || window.location.hostname.includes('--xlglas') || window.location.hostname.includes('--pr') || params.get('testpreview') === '1';
   if (!isPreview) return;
 
   const iteratie = params.get('iteratie') || 'Nieuwe iteratie';
