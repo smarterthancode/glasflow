@@ -3675,14 +3675,51 @@ function updateClock() {
   if (volgende) {
     const h = Math.floor(volgende.minuten / 60);
     const m = volgende.minuten % 60;
+    const s = now.getSeconds();
     const tijdStr = h > 0 ? `${h}u ${m}m` : `${m}m`;
+
+    // Bepaal of we NU in een pauze zitten
+    const pauzes = getPauzes();
+    let inPauze = false;
+    for (let i = 0; i < pauzes.length - 1; i++) {
+      const startMin = pauzes[i].h * 60 + pauzes[i].m;
+      // Kijk of huidige pauze een duur heeft
+      const dagIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+      const pauzeData = WERKTIJDEN.dagen[dagIdx]?.pauzes;
+      if (pauzeData) {
+        const pd = pauzeData.find(p => { const [ph,pm]=p.tijd.split(':').map(Number); return ph===pauzes[i].h && pm===pauzes[i].m; });
+        if (pd) {
+          const eindMin = startMin + pd.duur;
+          if (nowMin >= startMin && nowMin < eindMin) {
+            inPauze = true;
+            const restMin = eindMin - nowMin;
+            const isLastMin = restMin <= 1;
+            breakEl.textContent = `${pd.label} nog ${restMin <= 1 ? '< 1m' : restMin + 'm'}`;
+            breakEl.style.color = isLastMin ? '#e67e22' : '#1a73e8';
+            breakEl.style.fontWeight = '700';
+            breakEl.style.background = isLastMin ? 'rgba(230,126,34,.12)' : 'rgba(26,115,232,.1)';
+            breakEl.style.padding = '1px 6px';
+            breakEl.style.borderRadius = '4px';
+            return;
+          }
+        }
+      }
+    }
+
+    // Niet in pauze — toon aftelling
+    breakEl.style.background = '';
+    breakEl.style.padding = '';
+    breakEl.style.borderRadius = '';
     const isNear = volgende.minuten <= 15;
+    const isLastMin = volgende.minuten <= 1;
     breakEl.textContent = `${volgende.label} over ${tijdStr}`;
-    breakEl.style.color = isNear ? 'var(--ora)' : 'var(--tx3)';
+    breakEl.style.color = isLastMin ? '#e67e22' : isNear ? 'var(--ora)' : 'var(--tx3)';
     breakEl.style.fontWeight = isNear ? '700' : '400';
   } else {
     breakEl.textContent = 'Geen pauze meer vandaag';
     breakEl.style.color = 'var(--tx3)';
+    breakEl.style.background = '';
+    breakEl.style.padding = '';
   }
 }
 
@@ -4136,5 +4173,5 @@ document.addEventListener('DOMContentLoaded', () => { buildIntake(); buildAnalyt
   </div>
 </div>
 
-<!-- ═══════════════ KAART MODAL 
-
+<!-- ═══════════════ KAART MODAL
+<div style="position:fixed;bottom:8px;left:50%;transform:translateX(-50%);font-size:9px;font-family:monospace;color:#999;opacity:.6;z-index:50;pointer-events:none;background:rgba(255,255,255,.7);padding:2px 6px;border-radius:3px">v1.6</div>
